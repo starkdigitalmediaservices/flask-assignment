@@ -2,10 +2,12 @@ from flask import Flask, jsonify, request, views
 import os
 from ..models import Product, Category, ProductMeta
 from xplur.utility.utils import transform_list, AbstractView, api_response, get_pagination_resp
-from .swagger import data
+from .swagger import *
 from sqlalchemy.orm import joinedload
+from flasgger import Swagger, SwaggerView, Schema, fields
 
-class ProductView(AbstractView):
+
+class ProductView(AbstractView, SwaggerView):
     singular_name = 'Product'
     model = Product
 
@@ -76,6 +78,31 @@ class ProductView(AbstractView):
         return False
 
     def get(self):
+        """list products
+            ---
+            parameters:
+              - name: id
+                in: path
+                type: string
+                required: false
+            definitions:
+              name:
+                type: string
+                properties:
+                  product_name:
+                    type: char
+              price:
+                type: string
+                properties:
+                  product_price:
+                    type: char
+
+            responses:
+              200:
+                description: '{ "code": 200, "data": [ { "category_id": null, "id": 2, "name": "p2", "price": null, "sku": "p2" } ], "message": [ "ok" ], "paginator": { "current_page": 1, "limit": 1, "total_count": 19, "total_pages": 19 }, "success": true }'
+                examples:
+                  schema:
+        """
         try:
             get_id = request.args.get('id')
             if get_id:
@@ -94,6 +121,52 @@ class ProductView(AbstractView):
             return api_response(message=[str(e.args[0])], code=500, success=False)
     
     def post(self):
+        """create a product
+           sample request: ' 
+            {
+        "id":1,
+        "name":"p10",
+        "sku":"pw220200696887",
+        "description":"p10 description",
+        "category_id":1,
+        "price":344444,
+        "product_meta":{
+        "small_image_url":"https:www.google.com",
+        "large_image_url":"https:/wwww.google.com"
+            }
+        }
+        '
+            ---
+            definitions:
+              name:
+                type: string
+                properties:
+                  product_name:
+                    type: char
+              price:
+                type: string
+                properties:
+                  product_price:
+                    type: char
+            parameters:
+            - in: "body"
+            consumes:
+             - application/json
+
+            responses:
+              200:
+                description: '{ "code": 201, "data": {}, "message": [ "Product created successfully" ], "success": true }'
+                examples:
+                  {
+                    "code": 400,
+                    "data": {},
+                    "message": [
+                        "product with this sku already exist"
+                    ],
+                    "success": false
+                }
+
+        """
         try:
             req_data = request.json
             validated_data = self.validate(req_data)
@@ -107,6 +180,46 @@ class ProductView(AbstractView):
             return api_response(message=[str(e.args[0])], success=False,code=500)
 
     def put(self):
+        """partial update a product
+        sample request: ' 
+                    {
+                "id":1,
+                "name":"p10",
+                "sku":"pw220200696887",
+                "description":"p10 description",
+                "category_id":1,
+                "price":344444,
+                "product_meta":{
+                "small_image_url":"https:www.google.com",
+                "large_image_url":"https:/wwww.google.com"
+                }
+            }
+        '
+            ---
+            parameters:
+              - name: id
+                in: path
+                type: string
+                required: false
+            definitions:
+              name:
+                type: string
+                properties:
+                  product_name:
+                    type: char
+            parameters:
+            - in: "body"
+              price:
+                type: string
+                properties:
+                  product_price:
+                    type: char
+
+            responses:
+              200:
+                description: '{ "code": 200, "data": {}, "message": [ "Product updated successfully" ], "success": true }'
+                examples:
+        """ 
         try:
             req_data = request.json
             get_id = req_data.get('id')
@@ -130,6 +243,31 @@ class ProductView(AbstractView):
         
 
     def delete(self):
+        """delete a product
+            ---
+            parameters:
+              - name: id
+                in: path
+                type: string
+                required: false
+            definitions:
+              name:
+                type: string
+                properties:
+                  product_name:
+                    type: char
+              price:
+                type: string
+                properties:
+                  product_price:
+                    type: char
+
+            responses:
+              200:
+                description: '{ "code": 200, "data": {}, "message": [ "Product deleted successfully" ], "success": true }'
+                examples:
+                  rgb: ['red', 'green', 'blue']
+        """
         try:
             get_id = request.args.get('id')
             if not get_id:
